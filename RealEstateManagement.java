@@ -1,7 +1,8 @@
 import java.util.*;
 import java.io.*;
-
-// ========================= PROPERTY CLASS =========================
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+// Property class to hold property details
 class Property {
     private String propertyId;
     private String type;
@@ -38,17 +39,17 @@ class Property {
     @Override
     public String toString() {
         return String.format(
-                "ID: %s | Type: %s | Address: %s | Price: %.2f | Area: %.1f sqft | Bedrooms: %d | Available: %s",
+                "ID: %s | Type: %s | Address: %s | Price: %.2f | Area: %.1f sqft | Bedrooms: %d | Status: %s",
                 propertyId, type, address, price, area, bedrooms,
-                available ? "Yes" : "No"
+                available ? "Available" : "Sold"
         );
     }
 }
 
-// ===================== BUY / SELL RECORD CLASS ====================
+//buy sell records class
 class BuySellRecord {
     private String propertyId;
-    private String action;      // Bought / Sold
+    private String action;      // SOLD / AVAILABLE
     private String date;
 
     public BuySellRecord(String propertyId, String action, String date) {
@@ -67,20 +68,21 @@ class BuySellRecord {
     }
 }
 
-// ========================= MAIN CLASS =============================
+//main class
 public class RealEstateManagement {
 
     private static Scanner scanner = new Scanner(System.in);
-
     private static List<Property> properties = new ArrayList<>();
     private static List<BuySellRecord> history = new ArrayList<>();
 
     private static final String ADMIN_USER = "admin";
     private static final String ADMIN_PASS = "admin123";
 
-    // Files
     private static final String PROPERTIES_FILE = "properties.txt";
     private static final String HISTORY_FILE = "history.txt";
+
+    private static final DateTimeFormatter DATE_FORMAT =
+            DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
     public static void main(String[] args) {
         loadPropertiesFromFile();
@@ -88,44 +90,50 @@ public class RealEstateManagement {
         showLoginMenu();
     }
 
-    // ======================= LOGIN MENU ============================
+    // login menu
     private static void showLoginMenu() {
-        System.out.println("===== NAVYA REAL ESTATE MANAGEMENT =====");
+        System.out.println("--- NAVYA REAL ESTATE MANAGEMENT SYSTEM ---");
 
         while (true) {
             System.out.print("\nEnter Username: ");
-            String user = scanner.nextLine();
+            String user = scanner.nextLine().trim();
 
             System.out.print("Enter Password: ");
-            String pass = scanner.nextLine();
+            String pass = scanner.nextLine().trim();
 
             if (user.equals(ADMIN_USER) && pass.equals(ADMIN_PASS)) {
-                System.out.println("\nLogin Successful! Welcome Admin.");
+                System.out.println("\nLogin Successful! Welcome Admin.\n");
                 showMainMenu();
                 return;
             } else {
-                System.out.println("Incorrect Login. Try Again.");
+                System.out.println("Incorrect username or password. Try again.\n");
             }
         }
     }
 
-    // ======================= MAIN MENU =============================
+    // main menu
     private static void showMainMenu() {
         while (true) {
-            System.out.println("\n===== MAIN MENU =====");
+            System.out.println("... MAIN MENU ...");
             System.out.println("1. Add New Property");
             System.out.println("2. View All Properties");
-            System.out.println("3. Search Properties");
+            System.out.println("3. Search Properties by Address");
             System.out.println("4. Update Property Price");
             System.out.println("5. Delete Property");
-            System.out.println("6. Buy a Property");
-            System.out.println("7. Sell a Property");
-            System.out.println("8. View Buy/Sell History");
+            System.out.println("6. Mark Property as Sold");
+            System.out.println("7. Mark Property as Available Again");
+            System.out.println("8. View Transaction History");
             System.out.println("9. Logout");
-            System.out.print("Choose option: ");
+            System.out.print("Choose option (1-9): ");
+
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                System.out.println("Please enter a number!\n");
+                continue;
+            }
 
             try {
-                int choice = Integer.parseInt(scanner.nextLine());
+                int choice = Integer.parseInt(input);
 
                 switch (choice) {
                     case 1 -> addProperty();
@@ -133,53 +141,86 @@ public class RealEstateManagement {
                     case 3 -> searchProperties();
                     case 4 -> updateProperty();
                     case 5 -> deleteProperty();
-                    case 6 -> buyProperty();
-                    case 7 -> sellProperty();
+                    case 6 -> markAsSold();
+                    case 7 -> markAsAvailable();
                     case 8 -> viewHistory();
                     case 9 -> {
                         System.out.println("Logged out successfully!");
                         return;
                     }
-                    default -> System.out.println("Invalid choice! Try again.");
+                    default -> System.out.println("Invalid choice! Please select 1-9.\n");
                 }
-
             } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid number!");
+                System.out.println("Invalid input! Please enter a valid number.\n");
+            }
+        }
+    }
+    private static String readNonEmptyString(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (!input.isBlank()) {
+                return input;
+            }
+            System.out.println("This field cannot be empty! Please try again.");
+        }
+    }
+
+    private static double readPositiveDouble(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                double value = Double.parseDouble(scanner.nextLine().trim());
+                if (value > 0) return value;
+                System.out.println("Value must be positive!");
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number! Please enter a valid positive number.");
             }
         }
     }
 
-    // ===================== ADD PROPERTY ===========================
+    private static int readPositiveInt(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                int value = Integer.parseInt(scanner.nextLine().trim());
+                if (value > 0) return value;
+                System.out.println("Value must be positive!");
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid integer! Please enter a valid positive integer.");
+            }
+        }
+    }
+
+    //add property
     private static void addProperty() {
         System.out.println("\n=== ADD NEW PROPERTY ===");
 
-        System.out.print("Enter Property ID: ");
-        String id = scanner.nextLine();
+        String id = readNonEmptyString("Enter Property ID (e.g., P001): ");
 
-        System.out.print("Enter Type: ");
-        String type = scanner.nextLine();
+        // Check for duplicate ID
+        for (Property p : properties) {
+            if (p.getPropertyId().equalsIgnoreCase(id)) {
+                System.out.println("Error: Property ID '" + id + "' already exists!\n");
+                return;
+            }
+        }
 
-        System.out.print("Enter Address: ");
-        String address = scanner.nextLine();
-
-        System.out.print("Enter Price: ");
-        double price = Double.parseDouble(scanner.nextLine());
-
-        System.out.print("Enter Area (sqft): ");
-        double area = Double.parseDouble(scanner.nextLine());
-
-        System.out.print("Enter Bedrooms: ");
-        int bedrooms = Integer.parseInt(scanner.nextLine());
+        String type = readNonEmptyString("Enter Type (e.g., Apartment, House, Villa): ");
+        String address = readNonEmptyString("Enter Address: ");
+        double price = readPositiveDouble("Enter Price (₹): ");
+        double area = readPositiveDouble("Enter Area (sqft): ");
+        int bedrooms = readPositiveInt("Enter Number of Bedrooms: ");
 
         properties.add(new Property(id, type, address, price, area, bedrooms));
         savePropertiesToFile();
-        System.out.println("Property added successfully!");
+        System.out.println("Property added successfully!\n");
     }
 
-    // ===================== VIEW PROPERTIES =========================
+    // view properties
     private static void viewProperties() {
         if (properties.isEmpty()) {
-            System.out.println("No properties available.");
+            System.out.println("\nNo properties available in the system.\n");
             return;
         }
 
@@ -187,13 +228,19 @@ public class RealEstateManagement {
         for (Property p : properties) {
             System.out.println(p);
         }
+        System.out.println();
     }
 
-    // ======================== SEARCH ===============================
+    //search
     private static void searchProperties() {
-        System.out.print("Enter address to search: ");
-        String search = scanner.nextLine().toLowerCase();
+        if (properties.isEmpty()) {
+            System.out.println("\nNo properties to search.\n");
+            return;
+        }
 
+        String search = readNonEmptyString("Enter address keyword to search: ").toLowerCase();
+
+        System.out.println("\n=== SEARCH RESULTS ===");
         boolean found = false;
         for (Property p : properties) {
             if (p.getAddress().toLowerCase().contains(search)) {
@@ -202,139 +249,146 @@ public class RealEstateManagement {
             }
         }
 
-        if (!found) System.out.println("No matching properties found.");
+        if (!found) {
+            System.out.println("No properties found matching '" + search + "'.\n");
+        } else {
+            System.out.println();
+        }
     }
 
-    // ======================== UPDATE ===============================
+    // update
     private static void updateProperty() {
-        viewProperties();
-        if (properties.isEmpty()) return;
+        if (properties.isEmpty()) {
+            System.out.println("\nNo properties to update.\n");
+            return;
+        }
 
-        System.out.print("Enter Property ID to update: ");
-        String id = scanner.nextLine();
+        viewProperties();
+        String id = readNonEmptyString("Enter Property ID to update price: ");
 
         for (Property p : properties) {
-            if (p.getPropertyId().equals(id)) {
-                System.out.print("Enter new price: ");
-                double newPrice = Double.parseDouble(scanner.nextLine());
+            if (p.getPropertyId().equalsIgnoreCase(id)) {
+                double newPrice = readPositiveDouble("Enter new price (₹): ");
                 p.setPrice(newPrice);
-
                 savePropertiesToFile();
-                System.out.println("Price updated successfully!");
+                System.out.println("Price updated successfully!\n");
                 return;
             }
         }
-
-        System.out.println("Property not found!");
+        System.out.println("Property ID not found!\n");
     }
 
-    // ======================== DELETE ===============================
+    // delete
     private static void deleteProperty() {
-        viewProperties();
-        if (properties.isEmpty()) return;
+        if (properties.isEmpty()) {
+            System.out.println("\nNo properties to delete.\n");
+            return;
+        }
 
-        System.out.print("Enter Property ID to delete: ");
-        String id = scanner.nextLine();
+        viewProperties();
+        String id = readNonEmptyString("Enter Property ID to delete: ");
 
         Iterator<Property> it = properties.iterator();
         while (it.hasNext()) {
-            if (it.next().getPropertyId().equals(id)) {
+            Property p = it.next();
+            if (p.getPropertyId().equalsIgnoreCase(id)) {
                 it.remove();
                 savePropertiesToFile();
-                System.out.println("Property deleted successfully!");
+                System.out.println("Property deleted successfully!\n");
                 return;
             }
         }
-        System.out.println("Property not found!");
+        System.out.println("Property ID not found!\n");
     }
 
-    // ======================== BUY PROPERTY ==========================
-    private static void buyProperty() {
-        viewProperties();
-        if (properties.isEmpty()) return;
+    //mark as sold
+    private static void markAsSold() {
+        if (properties.isEmpty()) {
+            System.out.println("\nNo properties available.\n");
+            return;
+        }
 
-        System.out.print("Enter Property ID to BUY: ");
-        String id = scanner.nextLine();
+        viewProperties();
+        String id = readNonEmptyString("Enter Property ID to mark as SOLD: ");
 
         for (Property p : properties) {
-            if (p.getPropertyId().equals(id)) {
-
+            if (p.getPropertyId().equalsIgnoreCase(id)) {
                 if (!p.isAvailable()) {
-                    System.out.println("This property is already SOLD!");
+                    System.out.println("This property is already marked as Sold!\n");
                     return;
                 }
 
                 p.setAvailable(false);
-
-                history.add(new BuySellRecord(id, "BOUGHT", new Date().toString()));
+                String date = LocalDateTime.now().format(DATE_FORMAT);
+                history.add(new BuySellRecord(id, "SOLD", date));
                 savePropertiesToFile();
                 saveHistoryToFile();
-                System.out.println("Property bought successfully!");
+                System.out.println("Property marked as SOLD successfully!\n");
                 return;
             }
         }
-
-        System.out.println("Property not found!");
+        System.out.println("Property ID not found!\n");
     }
 
-    // ======================== SELL PROPERTY =========================
-    private static void sellProperty() {
-        viewProperties();
-        if (properties.isEmpty()) return;
+    // mark as available
+    private static void markAsAvailable() {
+        if (properties.isEmpty()) {
+            System.out.println("\nNo properties available.\n");
+            return;
+        }
 
-        System.out.print("Enter Property ID to SELL: ");
-        String id = scanner.nextLine();
+        viewProperties();
+        String id = readNonEmptyString("Enter Property ID to mark as AVAILABLE again: ");
 
         for (Property p : properties) {
-            if (p.getPropertyId().equals(id)) {
-
+            if (p.getPropertyId().equalsIgnoreCase(id)) {
                 if (p.isAvailable()) {
-                    System.out.println("This property is not bought yet. Cannot sell!");
+                    System.out.println("This property is already Available!\n");
                     return;
                 }
 
                 p.setAvailable(true);
-
-                history.add(new BuySellRecord(id, "SOLD", new Date().toString()));
+                String date = LocalDateTime.now().format(DATE_FORMAT);
+                history.add(new BuySellRecord(id, "AVAILABLE AGAIN", date));
                 savePropertiesToFile();
                 saveHistoryToFile();
-                System.out.println("Property sold successfully!");
+                System.out.println("Property marked as Available again successfully!\n");
                 return;
             }
         }
-
-        System.out.println("Property not found!");
+        System.out.println("Property ID not found!\n");
     }
 
-    // ======================== VIEW HISTORY ==========================
+    // view history
     private static void viewHistory() {
         if (history.isEmpty()) {
-            System.out.println("No buy/sell activity yet.");
+            System.out.println("\nNo transaction history yet.\n");
             return;
         }
 
-        System.out.println("\n=== BUY / SELL HISTORY ===");
+        System.out.println("\n=== TRANSACTION HISTORY ===");
         for (BuySellRecord r : history) {
             System.out.println(r.display());
         }
+        System.out.println();
     }
 
-    // ======================== FILE HANDLING ==========================
+    // file handling
     private static void savePropertiesToFile() {
         try (PrintWriter pw = new PrintWriter(new FileWriter(PROPERTIES_FILE))) {
             for (Property p : properties) {
                 pw.println(
                         p.getPropertyId() + "," +
-                        p.getType() + "," +
-                        p.getAddress() + "," +
-                        p.getPrice() + "," +
-                        p.getArea() + "," +
-                        p.getBedrooms() + "," +
-                        p.isAvailable()
+                                p.getType() + "," +
+                                p.getAddress() + "," +
+                                p.getPrice() + "," +
+                                p.getArea() + "," +
+                                p.getBedrooms() + "," +
+                                p.isAvailable()
                 );
             }
-        } catch (Exception e) {
-            System.out.println("Error saving properties: " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("Error saving properties: " + e.getMessage() + "\n");
         }
     }
 
@@ -344,20 +398,23 @@ public class RealEstateManagement {
 
         try (Scanner fileScanner = new Scanner(file)) {
             while (fileScanner.hasNextLine()) {
-                String[] d = fileScanner.nextLine().split(",");
+                String line = fileScanner.nextLine();
+                if (line.trim().isEmpty()) continue;
+
+                String[] parts = line.split(",", 7);
+                if (parts.length < 7) continue; // Skip corrupted lines
 
                 Property p = new Property(
-                        d[0], d[1], d[2],
-                        Double.parseDouble(d[3]),
-                        Double.parseDouble(d[4]),
-                        Integer.parseInt(d[5])
+                        parts[0], parts[1], parts[2],
+                        Double.parseDouble(parts[3]),
+                        Double.parseDouble(parts[4]),
+                        Integer.parseInt(parts[5])
                 );
-                p.setAvailable(Boolean.parseBoolean(d[6]));
-
+                p.setAvailable(Boolean.parseBoolean(parts[6]));
                 properties.add(p);
             }
         } catch (Exception e) {
-            System.out.println("Error loading properties: " + e.getMessage());
+            System.out.println("Error loading properties (some data may be corrupted): " + e.getMessage() + "\n");
         }
     }
 
@@ -366,8 +423,8 @@ public class RealEstateManagement {
             for (BuySellRecord r : history) {
                 pw.println(r.toString());
             }
-        } catch (Exception e) {
-            System.out.println("Error saving history: " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("Error saving history: " + e.getMessage() + "\n");
         }
     }
 
@@ -377,11 +434,16 @@ public class RealEstateManagement {
 
         try (Scanner fileScanner = new Scanner(file)) {
             while (fileScanner.hasNextLine()) {
-                String[] d = fileScanner.nextLine().split(",");
-                history.add(new BuySellRecord(d[0], d[1], d[2]));
+                String line = fileScanner.nextLine();
+                if (line.trim().isEmpty()) continue;
+
+                String[] parts = line.split(",", 3);
+                if (parts.length < 3) continue;
+
+                history.add(new BuySellRecord(parts[0], parts[1], parts[2]));
             }
         } catch (Exception e) {
-            System.out.println("Error loading history: " + e.getMessage());
+            System.out.println("Error loading history: " + e.getMessage() + "\n");
         }
     }
 }
