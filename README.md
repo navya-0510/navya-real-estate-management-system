@@ -1,47 +1,30 @@
 # Navya Real Estate Management System
 
-A **console-based Real Estate Management System** developed in Java. This project demonstrates core Object-Oriented Programming (OOP) concepts, file handling, collections, and a user-friendly menu-driven interface.
+A **console-based Real Estate Management System** built in Java. This project demonstrates core Object-Oriented Programming (OOP) concepts, file handling, collections, and a menu-driven user interface with full data persistence.
 
 ## 🚀 Features
-- Add, view, search, update, and delete properties
+- Add new properties
+- View, search (by address), update price, and delete properties
 - Mark properties as **Sold** or **Available Again**
 - Complete transaction history tracking
-- Data persistence using text files (`properties.txt` & `history.txt`)
-- Strong input validation (no crashes on wrong input)
+- Data saved automatically to text files (`properties.txt` & `history.txt`)
+- Strong input validation (no crashes on invalid input)
 - Prevents duplicate Property IDs
-- Simple admin login protection
+- Simple admin login for security
 
-**Login Credentials:**
-- Username: `admin`
-- Password: `admin123`
+**Default Login Credentials**  
+Username: `admin`  
+Password: `admin123`
 
 ## 🛠️ OOP Concepts Demonstrated
 - **Encapsulation** – Private fields with getters/setters
-- **Polymorphism** – `toString()` method overriding
-- **Abstraction** – Menu system hides implementation details
-- **Collections** – `ArrayList` for dynamic storage
+- **Polymorphism** – Overriding `toString()` for clean output
+- **Abstraction** – Menu system hides complex logic
+- **Collections** – `ArrayList` for dynamic storage of properties and history
 
-## ▶️ How to Run
-1. Compile the code:
+## ▶️ How to Run the Project
+1. Make sure you have Java installed (JDK 8 or higher)
+2. Open terminal/command prompt in the project folder
+3. Compile the code:
    ```bash
-  java RealEstateManagement
-
-📂 Project Structure
-Navya_estate_manage/
-├── RealEstateManagement.java    ← Main source code (single file)
-├── README.md                    ← This file
-└── .gitignore                   ← Ignores compiled files & data
-
-🔮 Future Enhancements (Ideas)
-Add a Graphical User Interface (Swing/JavaFX)
-Connect to a database (MySQL/SQLite)
-Multiple user roles (Admin, Agent, Customer)
-Upload and display property images
-Search by price range, bedrooms, etc.
-
-👩‍💻 Developed By
-Navya
-GitHub: @navya-0510
-
-Thank you for visiting my project!
-If you like it, please give it a ⭐ Star – it means a lot! 😊
+   javac RealEstateManagement.java
